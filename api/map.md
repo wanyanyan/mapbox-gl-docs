@@ -709,7 +709,7 @@ const isRotating = map.isRotating();
 
 *type* `string` 需要监听的事件类型，只有部分事件可以指定在某个图层上监听，具体如下表所示：
 
-|  事件   | 是否兼容`layerId`  |
+|  事件   | 是否支持`layerId`  |
 |  ----  | ----  |
 | mousedown | 是 |
 | mouseup | 是 |
@@ -854,58 +854,121 @@ map.on('click', ['countries', 'background'], (e) => {
 **示例**
 
 ```js
-// Set an event listener that will fire
-// when the map has finished loading.
-map.on('load', () => {
-  // Add a new layer.
-  map.addLayer({
-    id: 'points-of-interest',
-    source: {
-      type: 'vector',
-      url: 'mapbox://mapbox.mapbox-streets-v8'
-    },
-    'source-layer': 'poi_label',
-    type: 'circle',
-    paint: {
-      // Mapbox Style Specification paint properties
-    },
-    layout: {
-      // Mapbox Style Specification layout properties
-    }
-  });
+// Log the coordinates of a user's first map touch.
+map.once('touchstart', (e) => {
+  console.log(`The first map touch was at: ${e.lnglat}`);
 });
 ```
 
 ```js
-// Set an event listener that will fire
-// when a feature on the countries layer of the map is clicked.
-map.on('click', 'countries', (e) => {
-  new mapboxgl.Popup()
-    .setLngLat(e.lngLat)
-    .setHTML(`Country name: ${e.features[0].properties.name}`)
-    .addTo(map);
+// Log the coordinates of a user's first map touch
+// on a specific layer.
+map.once('touchstart', 'my-point-layer', (e) => {
+  console.log(`The first map touch on the point layer was at: ${e.lnglat}`);
 });
 ```
 
 ```js
-// Set an event listener that will fire
-// when a feature on the countries or background layers of the map is clicked.
-map.on('click', ['countries', 'background'], (e) => {
-  new mapboxgl.Popup()
-    .setLngLat(e.lngLat)
-    .setHTML(`Country name: ${e.features[0].properties.name}`)
-    .addTo(map);
+// Log the coordinates of a user's first map touch
+// on specific layers.
+map.once('touchstart', ['my-point-layer', 'my-point-layer-2'], (e) => {
+  console.log(`The first map touch on the point layer was at: ${e.lnglat}`);
 });
 ```
 
 **相关资料**
 
-[示例: 在地图上添加三维地形](https://docs.mapbox.com/mapbox-gl-js/example/add-terrain/)
+[示例: 创建一个可拖拽的点](https://docs.mapbox.com/mapbox-gl-js/example/drag-a-point/)
 
-[示例: 点击一个符号时，将符号居中](https://docs.mapbox.com/mapbox-gl-js/example/center-on-symbol/)
+[示例: 在三维地形上绕点飞行](https://docs.mapbox.com/mapbox-gl-js/example/free-camera-point/)
 
-[示例: 创建一个可拖拽的标签](https://docs.mapbox.com/mapbox-gl-js/example/drag-a-point/)
+[示例: 创建地图飞行动画，并在侧边显示详情](https://docs.mapbox.com/mapbox-gl-js/example/playback-locations/)
 
-[示例: 创建鼠标悬浮高亮效果](https://docs.mapbox.com/mapbox-gl-js/example/hover-styles/)
+----------
+#### off(type, layerIds, listener)
 
-[示例: 点击地图显示一个弹窗](https://docs.mapbox.com/mapbox-gl-js/example/popup-on-click/)
+将地图上用[Map#on](/api/map?id=ontype-layerids-listener)添加的事件监听函数全部移除，也可以选择只移除指定图层上的事件
+
+**参数**
+
+*type* `string` 需要移除监听的事件类型
+
+*layerIds* `((string | Array<string>))` 可选。 之前添加监听时指定的图层列表
+
+*listener* `Function` 需要移除的监听函数
+
+**返回值**
+
+`Map`: 返回地图实例本身用来链式调用
+
+**示例**
+
+```js
+// Create a function to print coordinates while a mouse is moving.
+function onMove(e) {
+  console.log(`The mouse is moving: ${e.lngLat}`);
+}
+// Create a function to unbind the `mousemove` event.
+function onUp(e) {
+  console.log(`The final coordinates are: ${e.lngLat}`);
+  map.off('mousemove', onMove);
+}
+// When a click occurs, bind both functions to mouse events.
+map.on('mousedown', (e) => {
+  map.on('mousemove', onMove);
+  map.once('mouseup', onUp);
+});
+```
+
+**相关资料**
+
+[示例: 创建一个可拖拽的点](https://docs.mapbox.com/mapbox-gl-js/example/drag-a-point/)
+
+### 要素查询
+
+#### queryRenderedFeatures(geometry?, options?)
+
+返回满足查询条件的[GeoJSON要素](http://geojson.org/)列表
+
+**参数**
+
+*geometry* `((PointLike | Array<PointLike>)?)` 需要查询的几何范围，单位为像素。可以是一个单独的点，也可以是一个由左下角点和右上角点构成的包围盒。如果不指定该参数，则会认为要查询的是整个地图视图。只有在地图视图内的范围才有效。
+
+*options* `(Object?)` 查询参数，具体参数项如下：
+
+| 名称 | 描述 |
+| ---- | ---- |
+| **options.filter** `Array?` | 过滤条件，对查询结果按指定的条件进行过滤 |
+| **options.layers** `Array<string>?` | 需要查询的图层id列表，只有指定的图层要素才会被返回，如果这个属性为`undefined`，则所有的符合条件的图层都会被查询到 |
+| **options.validate** `boolean` <br> 默认值：`true` | 检查`options.filter`是否符合Mapbox样式规范。禁用格式检查可以用来进行性能优化，但前提是你在调用该函数之前已经检查过该参数的有效性 |
+
+
+**返回值**
+
+`Array<Object>`: 满足查询条件的[GeoJSON要素](http://geojson.org/)列表
+
+返回的要素中的`properties`属性是该要素数据源中的属性值。对于GeoJSON数据源来说，只支持字符串和数值类型的属性值。`null`、`Array`和`Object`不支持。
+
+返回的每个每个要素在最上层都有`layer`、`source`和`sourceLayer`属性。其中`layer`属性表示查询到的这个要素是样式(style)中的哪个图层渲染的。`layer`属性中的布局属性和绘图属性的值是根据当前级别和要素重新计算的。
+
+只会返回当前渲染在地图上的要素，以下几种要素不会被查询到：
+
+- 图层中的`visibility`属性值为`none`的要素
+
+- 图层中设置的可见级别的范围不包含当前地图的级别
+
+- 由于文本或图标碰撞被隐藏的符号要素
+
+除此以外的所有其他要素都可以被查询到，包括那些因绘图属性设置原因而在地图上不可见的要素，例如图层的透明度或者颜色值的alpha通道设置为0。
+
+位于地图上层的要素在返回的数组中会越靠前，同一个要素被多次渲染（低级别时跨越中央子午线的要素），只会返回一条结果。
+
+
+
+**示例**
+
+```js
+// Create a function to print coordinates while a mouse is moving.
+function onMove(e) {
+  console.log(`The mouse is moving: ${e.lngLat}`);
+}
