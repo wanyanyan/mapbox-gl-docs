@@ -968,7 +968,309 @@ map.on('mousedown', (e) => {
 **示例**
 
 ```js
-// Create a function to print coordinates while a mouse is moving.
-function onMove(e) {
-  console.log(`The mouse is moving: ${e.lngLat}`);
-}
+// Find all features at a point
+const features = map.queryRenderedFeatures(
+  [20, 35],
+  {layers: ['my-layer-name']}
+);
+```
+
+```js
+// Find all features within a static bounding box
+const features = map.queryRenderedFeatures(
+  [[10, 20], [30, 50]],
+  {layers: ['my-layer-name']}
+);
+```
+
+```js
+// Find all features within a bounding box around a point
+const width = 10;
+const height = 20;
+const features = map.queryRenderedFeatures([
+  [point.x - width / 2, point.y - height / 2],
+  [point.x + width / 2, point.y + height / 2]
+], {layers: ['my-layer-name']});
+```
+
+```js
+// Query all rendered features from a single layer
+const features = map.queryRenderedFeatures({layers: ['my-layer-name']});
+```
+
+**相关资料**
+
+[示例: 查询鼠标指针处的要素](https://www.mapbox.com/mapbox-gl-js/example/queryrenderedfeatures/)
+
+[示例: 高亮指定包围盒内的要素](https://www.mapbox.com/mapbox-gl-js/example/using-box-queryrenderedfeatures/)
+
+[示例: 查询地图视图范围内的所有要素](https://www.mapbox.com/mapbox-gl-js/example/filter-features-within-map-view/)
+
+#### querySourceFeatures(sourceId, parameters?)
+
+返回指定的矢量瓦片或GeoJSON数据源种满足查询条件的[GeoJSON要素](http://geojson.org/)列表
+
+**参数**
+
+*sourceId* `(string)` 矢量瓦片或者GeoJSON数据源的ID。
+
+*parameters* `(Object?)` 查询参数，具体参数项如下：
+
+| 名称 | 描述 |
+| ---- | ---- |
+| **parameters.filter** `Array?` | 过滤条件，对查询结果按指定的条件进行过滤 |
+| **parameters.sourceLayer** `Array<string>?` | 需要查询的数据图层名称。只对矢量瓦片数据源有效，GeoJSON数据源忽略该参数 |
+| **parameters.validate** `boolean` <br> 默认值：`true` | 检查`options.filter`是否符合Mapbox样式规范。禁用格式检查可以用来进行性能优化，但前提是你在调用该函数之前已经检查过该参数的有效性 |
+
+
+**返回值**
+
+`Array<Object>`: 满足查询条件的[GeoJSON要素](http://geojson.org/)列表
+
+与[Map#queryRenderedFeatures](/api/map?id=queryrenderedfeaturesgeometry-options)不同的是，该函数会返回所有符合条件的要素列表，无论该要素是否渲染。查询范围包含所有已经加载的矢量瓦片和GeoJSON数据源，但是不包括当前视图范围以外的数据。
+
+由于查询的要素来自与矢量瓦片或者GeoJSON数据源，因此在瓦片边界的地方可能会出现要素被切割或者重复的要素，因此在查询结果中可能有部分要素重复出现。
+
+
+
+**示例**
+
+```js
+// Find all features in one source layer in a vector source
+const features = map.querySourceFeatures('your-source-id', {
+  sourceLayer: 'your-source-layer'
+});
+```
+
+**相关资料**
+
+[示例: 高亮与当前选中的数据相似的要素](https://www.mapbox.com/mapbox-gl-js/example/query-similar-features/)
+
+### 样式相关
+
+#### setStyle(style, options?)
+
+更新地图的样式。
+
+如果已经设置过地图样式，再次调用该函数并且`diff`参数设置为`true`时，地图会将新的样式与旧的样式就行比较，并找出变化的部分，只对变化的部分进行更新。但是sprite和glyph发生变化时无法进行差异化更新，只能进行整体更新，会将原来的地图样式移除后再重新设置新的地图样式。
+
+**参数**
+
+*style* `((Object | string | null))` 一个描述地图样式的JSON对象或者该JSON对象的url地址。
+
+*options* `(Object?)` 选项参数，具体参数项如下：
+
+| 名称 | 描述 |
+| ---- | ---- |
+| **options.diff** `boolean` <br> 默认值：`true` | 如果设为`false`，则进行全量更新，会将原来的地图样式移除，再设置新的地图样式 |
+| **options.localIdeographFontFamily** `string` <br> 默认值：`sans-serif` | 定义一个CSS字体用来覆盖'CJK Unified Ideographs', 'Hiragana', 'Katakana', 'Hangul Syllables' 和 'CJK Symbols and Punctuation'范围内的字形文件。地图样式中设置的这些字形将会被忽略，除非设置了`font-weight`。如果设为`false`，则只能使用样式文件中的字体设置。 |
+
+**返回值**
+
+`Map`: 返回地图实例本身用来链式调用
+
+**示例**
+
+```js
+map.setStyle("mapbox://styles/mapbox/streets-v11");
+```
+
+**相关资料**
+
+[示例: 更改地图的样式](https://www.mapbox.com/mapbox-gl-js/example/setstyle/)
+
+#### getStyle()
+
+获取地图的样式
+
+**返回值**
+
+`Object`: 地图样式的JSON对象。
+
+**示例**
+
+```js
+map.on('load', () => {
+  const styleJson = map.getStyle();
+});
+```
+
+#### isStyleLoaded()
+
+检查地图的样式是否已经被完整的加载
+
+**返回值**
+
+`boolean`: 地图样式是否已被完整加载。
+
+**示例**
+
+```js
+const styleLoadStatus = map.isStyleLoaded();
+```
+
+### 数据源
+
+#### addSource(id, source)
+
+向地图样式中添加一个新的数据源。
+
+**参数**
+
+*id* `(string)` 需要添加的数据源的ID，不能与已有的数据源冲突。
+
+*source* `(Object?)` 要添加的数据源，参考样式规范中的[数据源定义](/style/sources.md)
+
+**返回值**
+
+`Map`: 返回地图实例本身用来链式调用
+
+**示例**
+
+```js
+map.addSource('my-data', {
+  type: 'vector',
+  url: 'mapbox://myusername.tilesetid'
+});
+```
+
+```js
+map.addSource('my-data', {
+  "type": "geojson",
+  "data": {
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [-77.0323, 38.9131]
+  },
+  "properties": {
+    "title": "Mapbox DC",
+    "marker-symbol": "monument"
+  }
+  }
+});
+```
+
+**相关资料**
+
+[示例: 矢量瓦片数据源：显示和隐藏图层](https://docs.mapbox.com/mapbox-gl-js/example/toggle-layers/)
+
+[示例: GeoJSON数据源：添加实时数据](https://docs.mapbox.com/mapbox-gl-js/example/live-geojson/)
+
+[示例: 栅格数据源：添加山影](https://docs.mapbox.com/mapbox-gl-js/example/hillshade/)
+
+#### isSourceLoaded(id)
+
+检查指定的数据源是否已经加载，如果指定id的数据源已经没有需要请求的数据，则返回`true`，否则返回`false`
+
+**参数**
+
+*id* `(string)` 需要检查的数据源ID。
+
+**返回值**
+
+`boolean`: 指定的数据源是否已经加载
+
+**示例**
+
+```js
+const sourceLoaded = map.isSourceLoaded('bathymetry-data');
+```
+
+#### areTilesLoaded()
+
+当前视图内所有数据源的所有瓦片是否已经加载完成。
+
+**返回值**
+
+`boolean`: 视图内的所有瓦片是否都已经请求完成
+
+**示例**
+
+```js
+const tilesLoaded = map.areTilesLoaded();
+```
+
+#### removeSource(id)
+
+从当前地图样式中移除指定id的数据源。
+
+**参数**
+
+*id* `(string)` 需要移除的数据源ID。
+
+**返回值**
+
+`Map`: 返回地图实例本身用来链式调用
+
+**示例**
+
+```js
+map.removeSource('bathymetry-data');
+```
+
+#### getSource(id)
+
+获取指定id的数据源。该方法通常用来获取数据源示例来更新地图样式中的数据源。例如设置GeoJSON数据源的`data`，或者更新图片数据源的`url`和`coordinates`。
+
+**参数**
+
+*id* `(string)` 需要获取的数据源ID。
+
+**返回值**
+
+`Object?`: 指定id的数据源示例，如果不存在则返回undefined。具体的结构根据数据源的类型不同会有所不同。
+
+**示例**
+
+```js
+const sourceObject = map.getSource('points');
+```
+
+**相关资料**
+
+[示例: 创建一个可拖拽的点](https://docs.mapbox.com/mapbox-gl-js/example/drag-a-point/)
+
+[示例: 为点要素创建一个动画效果](https://docs.mapbox.com/mapbox-gl-js/example/animate-point-along-line/)
+
+[示例: 添加实时数据](https://docs.mapbox.com/mapbox-gl-js/example/live-geojson/)
+
+### 图片
+
+#### addImage(id, image, options)
+
+向地图样式中添加一个图片，这个图片可以像地图样式sprite中的图标一样使用，通过图片的id用于`icon-iamge`,`background-pattern`, `fill-pattern`或者`line-pattern`。如果地图的雪碧图中没有足够的空间添加图片，则会报错。
+
+**参数**
+
+*id* `(string)` 图片的id
+
+*image* `((HTMLImageElement | ImageBitmap | ImageData | {width: number, height: number, data: (Uint8Array | Uint8ClampedArray)} | StyleImageInterface))` 需要添加的图片，可以是`HTMLImageElement`, `ImageData`, `ImageBitmap`或者一个包含`width`, `height`和`data`属性的对象。
+
+*options* `((Object | null))` 选项参数，默认值`{}`，具体参数如下：
+
+| 名称 | 描述 |
+| ---- | ---- |
+| **options.content** `[number, number, number, number]` | `[x1, y1, x2, y2]` 如果设置了`icon-text-fit`，该属性定义了图片中可以被`text-field`中的内容覆盖的部分 |
+| **options.pixelRatio** `number` <br> 默认值：`1` | 图片的像素与屏幕的像素比 |
+| **options.sdf** `boolean` <br> 默认值：`false` | 图片是否解析为sdf图片 |
+| **options.stretchX** `Array<[number, number]>` | 图片是否解析为sdf图片 |
+| **options.stretchY** `Array<[number, number]>` | 图片是否解析为sdf图片 |
+
+**返回值**
+
+`Object?`: 指定id的数据源示例，如果不存在则返回undefined。具体的结构根据数据源的类型不同会有所不同。
+
+**示例**
+
+```js
+const sourceObject = map.getSource('points');
+```
+
+**相关资料**
+
+[示例: 创建一个可拖拽的点](https://docs.mapbox.com/mapbox-gl-js/example/drag-a-point/)
+
+[示例: 为点要素创建一个动画效果](https://docs.mapbox.com/mapbox-gl-js/example/animate-point-along-line/)
+
+[示例: 添加实时数据](https://docs.mapbox.com/mapbox-gl-js/example/live-geojson/)
