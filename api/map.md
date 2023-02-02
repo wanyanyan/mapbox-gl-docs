@@ -1254,23 +1254,133 @@ const sourceObject = map.getSource('points');
 | **options.content** `[number, number, number, number]` | `[x1, y1, x2, y2]` 如果设置了`icon-text-fit`，该属性定义了图片中可以被`text-field`中的内容覆盖的部分 |
 | **options.pixelRatio** `number` <br> 默认值：`1` | 图片的像素与屏幕的像素比 |
 | **options.sdf** `boolean` <br> 默认值：`false` | 图片是否解析为sdf图片 |
-| **options.stretchX** `Array<[number, number]>` | 图片是否解析为sdf图片 |
-| **options.stretchY** `Array<[number, number]>` | 图片是否解析为sdf图片 |
-
-**返回值**
-
-`Object?`: 指定id的数据源示例，如果不存在则返回undefined。具体的结构根据数据源的类型不同会有所不同。
+| **options.stretchX** `Array<[number, number]>` | `[[x1, x2], ...]` 如果设置了`icon-text-fit`，该属性定义了图片中可以被水平拉伸的范围 |
+| **options.stretchY** `Array<[number, number]>` | `[[y1, y2], ...]` 如果设置了`icon-text-fit`，该属性定义了图片中可以被垂直拉伸的范围 |
 
 **示例**
 
 ```js
-const sourceObject = map.getSource('points');
+// If the style's sprite does not already contain an image with ID 'cat',
+// add the image 'cat-icon.png' to the style's sprite with the ID 'cat'.
+map.loadImage('https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Cat_silhouette.svg/400px-Cat_silhouette.svg.png', (error, image) => {
+  if (error) throw error;
+  if (!map.hasImage('cat')) map.addImage('cat', image);
+});
+ 
+// Add a stretchable image that can be used with `icon-text-fit`
+// In this example, the image is 600px wide by 400px high.
+map.loadImage('https://upload.wikimedia.org/wikipedia/commons/8/89/Black_and_White_Boxed_%28bordered%29.png', (error, image) => {
+  if (error) throw error;
+  if (!map.hasImage('border-image')) {
+    map.addImage('border-image', image, {
+      content: [16, 16, 300, 384], // place text over left half of image, avoiding the 16px border
+      stretchX: [[16, 584]], // stretch everything horizontally except the 16px border
+      stretchY: [[16, 384]], // stretch everything vertically except the 16px border
+    });
+  }
+});
 ```
 
 **相关资料**
 
-[示例: 创建一个可拖拽的点](https://docs.mapbox.com/mapbox-gl-js/example/drag-a-point/)
+[示例: 使用`HTMLImageElement`在地图上添加一个图标](https://www.mapbox.com/mapbox-gl-js/example/add-image/)
 
-[示例: 为点要素创建一个动画效果](https://docs.mapbox.com/mapbox-gl-js/example/animate-point-along-line/)
+[示例: 使用`ImageData`在地图上添加一个图标](https://www.mapbox.com/mapbox-gl-js/example/add-image-generated/)
 
-[示例: 添加实时数据](https://docs.mapbox.com/mapbox-gl-js/example/live-geojson/)
+#### updateImage(id, image)
+
+更新地图样式中已经存在的某个图标。
+
+**参数**
+
+*id* `(string)` 图片的id
+
+*image* `((HTMLImageElement | ImageBitmap | ImageData | {width: number, height: number, data: (Uint8Array | Uint8ClampedArray)} | StyleImageInterface))` 需要添加的图片，可以是`HTMLImageElement`, `ImageData`, `ImageBitmap`或者一个包含`width`, `height`和`data`属性的对象。
+
+**示例**
+
+```js
+// Load an image from an external URL.
+map.loadImage('http://placekitten.com/50/50', (error, image) => {
+  if (error) throw error;
+  // If an image with the ID 'cat' already exists in the style's sprite,
+  // replace that image with a new image, 'other-cat-icon.png'.
+  if (map.hasImage('cat')) map.updateImage('cat', image);
+});
+```
+
+#### hasImage(id)
+
+检查指定id的图标在地图样式中是否存在。地图样式中通过`sprite`定义的图标以及通过`addImage`接口添加的图标都在检查范围之内。
+
+**参数**
+
+*id* `(string)` 图片的id
+
+**返回值**
+
+`boolean`: 指定id的图标是否存在。
+
+**示例**
+
+```js
+// Check if an image with the ID 'cat' exists in
+// the style's sprite.
+const catIconExists = map.hasImage('cat');
+```
+
+#### removeImage(id)
+
+从地图样式中移除指定id的图标。地图样式中通过`sprite`定义的图标以及通过`addImage`接口添加的图标都可以通过该接口移除。
+
+**参数**
+
+*id* `(string)` 图片的id
+
+**示例**
+
+```js
+// If an image with the ID 'cat' exists in
+// the style's sprite, remove it.
+if (map.hasImage('cat')) map.removeImage('cat');
+```
+
+#### loadImage(url, callback)
+
+从外部url加载一个图片，使之可以用`addImage`接口添加到地图样式中。外部url的域名必须符号[跨域政策](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS)。
+
+**参数**
+
+*url* `(string)` 图片的url地址。图片文件必须是png, webp或者jpg格式。
+
+*callback* `(Function)` 回调函数`callback(error, data)`，在图片完成加载或者加载出错时调用。
+
+**示例**
+
+```js
+// Load an image from an external URL.
+map.loadImage('http://placekitten.com/50/50', (error, image) => {
+  if (error) throw error;
+  // Add the loaded image to the style's sprite with the ID 'kitten'.
+  map.addImage('kitten', image);
+});
+```
+
+**相关资料**
+
+[示例: 在地图上添加一个图标](https://www.mapbox.com/mapbox-gl-js/example/add-image/)
+
+#### listImages()
+
+获取当前地图上可以使用的所有图标的id列表。地图样式中通过`sprite`定义的图标以及通过`addImage`接口添加的图标都包含在内。
+
+**返回值**
+
+`Array<string>`: 地图上可以使用的所有图标id列表。
+
+**示例**
+
+```js
+const allImages = map.listImages();
+```
+
