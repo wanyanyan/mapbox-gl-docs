@@ -1,11 +1,8 @@
 - [**指南（Guide）**](/guide/index.md)
 
   - [安装](/guide/install.md)
-  - [迁移到Mapbox GL JS v2](/guide/migrate.md)
   - [三维球和大气](/guide/globe.md)
   - [投影](/guide/projections.md)
-  - [浏览器和测试](/guide/browsers.md)
-  - [定价](/guide/price.md)
 
 - [**接口（API）**](/api/index.md)
 
@@ -32,15 +29,3 @@
   - [数据类型](/style/types.md)
   - [表达式](/style/expressions.md)
   - [其他](/style/other.md)
-
-- [**示例（Example）**](/example/index.md)
-
-  - [Deploy](deploy.md)
-  - [Helpers](helpers.md)
-  - [Vue compatibility](vue.md)
-  - [CDN](cdn.md)
-  - [Offline Mode (PWA)](pwa.md)
-  - [Server-Side Rendering (SSR)](ssr.md)
-  - [Embed Files](embed-files.md)
-
-- [**插件（Plugin）**](/plugin/index.md)
